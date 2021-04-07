@@ -6,7 +6,7 @@
 #
 # Released under the GNU General Public License
 
-VERSION = "0.1"
+VERSION = "0.2"
 
 try:
     from settings import Settings
@@ -40,8 +40,11 @@ class BrickShooter:
         """Initialize the game"""
         pygame.init()
         self.running = True
+        self.last_loop = False
         self.pause = False
         self.settings = Settings()
+
+        self.clock = pygame.time.Clock()
 
         self.screen = pygame.display.set_mode(
             (self.settings.screen_width, self.settings.screen_height)
@@ -53,8 +56,6 @@ class BrickShooter:
 
         # initiate objects
         self.slider = Slider()
-        self.first_ball = Ball()
-        self.brick_list = [Brick() for _ in range(0, 1)]
 
         # initiate sprite groups
         self.balls = pygame.sprite.Group()
@@ -63,19 +64,19 @@ class BrickShooter:
         self.all_sprites = pygame.sprite.Group()
 
         # Add the starting objects to the groups
-        self.balls.add(self.first_ball)
-        self.all_sprites.add(self.first_ball)
+        self.balls.add(Ball("Starter"))  # First ball is started with a special argument
+        for ball in self.balls:
+            self.all_sprites.add(ball)
         self.sliders.add(self.slider)
         self.all_sprites.add(self.slider)
-        self.bricks.add(self.brick_list[0])
-        self.all_sprites.add(self.brick_list[0])
-
-    def add_bricks(self):
-        pass
+        while len(self.bricks) < self.settings.start_bricks:
+            new_brick = Brick(self.all_sprites)
+            self.bricks.add(new_brick)
+            self.all_sprites.add(new_brick)
 
     def run_game(self):
         """Start the main loop of the game"""
-        while self.running:
+        while self.running and self.last_loop == False:
             # Checks for keyboard input
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
@@ -91,6 +92,7 @@ class BrickShooter:
             if (
                 self.pause
             ):  # Combined with above gives the change to pause the game for a moment (or demonstration)
+                pygame.time.wait(100)
                 continue  # TODO: find more elegant solution (add delay or sleep)
 
             # Creates a dict with key and bool (is pressed?) for the keyboard
@@ -102,15 +104,25 @@ class BrickShooter:
             # moves the balls
             if (
                 self.running
+                and pygame.time.get_ticks() > 2000  # TODO make delayed start pretty
             ):  # TODO: Define different loss behavior than just close window
 
                 for ball in self.balls:
-                    ball.update(self.slider, self.brick_list)
+                    ball.update(self.balls, self.sliders, self.bricks, self.all_sprites)
                 if not len(self.balls):
                     self.running = False
+                if len(self.bricks) < self.settings.min_bricks:
+                    new_brick = Brick(self.all_sprites)
+                    self.bricks.add(new_brick)
+                    self.all_sprites.add(new_brick)
 
             # updates the screen for every iteration
             self.screen.fill(self.settings.bg_color)
+
+            # change on last loop
+            if not self.running:
+                self.last_loop = True
+                self.screen.fill((255, 50, 0))
 
             # Print all sprites onto the screen
             for entity in self.all_sprites:
@@ -118,7 +130,19 @@ class BrickShooter:
 
             # prints the current game situation
             pygame.display.flip()
-        # TODO exit text oder so
+
+            # delays the game to have a constant frame rate
+            self.clock.tick(self.settings.max_fps)
+
+        # TODO exit text oder so, pause end or delay for a while and print text
+        print(self.clock.get_fps())
+        print(
+            Ball()._destroyed_bricks, Ball()._slider_reflections
+        )  # TODO: getter function
+        # TODO choose a real value and only trigger pause upon loss can be confusing otherwise
+
+        pygame.time.wait(1500)
+        print(pygame.time.get_ticks())
 
 
 if __name__ == "__main__":
