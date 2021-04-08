@@ -5,18 +5,14 @@ from settings import Settings
 from random import randint, choice
 from handling import load_png
 import math
+import sounds
 
 # copied from www.realpython.com/pygame-a-primer
 # Import pygame.locals for easier access to key coordinates
 # Updated to conform to flake8 and black standards
 from pygame.locals import (
-    K_UP,
-    K_DOWN,
     K_LEFT,
     K_RIGHT,
-    K_ESCAPE,
-    KEYDOWN,
-    QUIT,
 )
 
 
@@ -64,25 +60,22 @@ class Ball(pygame.sprite.Sprite):
 
     def __init__(self, special="Normal", direction=None):
         super(Ball, self).__init__()
-        if direction is None:
-            self.start_direction = [1, -1]
-        else:
-            self.start_direction = direction
+        # load the external init settings
+        self.settings = Settings()
         self.special = special
+        # self.last_collision = 0
 
-        # set the image and size
+        # set the image and size  # TODO: Different image for first ball?
         if self.special == "Teleporter":
             self.image, self.rect = load_png("bball.png")
+        elif self.special == "Beach":
+            self.image, self.rect = load_png("beball.png")
         else:
             self.image, self.rect = load_png("ball.png")
         self.image.convert()
 
-        self.resize_rect(
-            0.90
-        )  # shrink the ball rect slightly to make ball behave less 'rectangly'
-
-        self.settings = Settings()
-
+        # shrink the ball rect slightly to make ball behave less 'rectangly'
+        self.resize_rect(0.95)
         # Starting position somewhere in the upper center of the screen
         # self.rand_start_pos()
 
@@ -95,8 +88,11 @@ class Ball(pygame.sprite.Sprite):
         # always start with upward speed and make sure that speed has an angle
         if direction is None:
             self.start_direction = [choice([-1, 1]), -1]
+        elif direction is [0, 0]:
+            self.start_direction = [0, 0]
         else:
             self.start_direction = direction
+
         self.speed = self.calculate_speed()
         # self.speed = [1.2, -0.1]
         # Tried random direction but is mostly boring. 45° seems to work best
@@ -105,19 +101,26 @@ class Ball(pygame.sprite.Sprite):
         self.rest_speed = [0.0, 0.0]
 
     def random_direction(self):
-        x_speed = randint(1, int(self.settings.speed - 2))
-        y_speed = -math.sqrt(self.settings.speed ** 2 - x_speed ** 2)
-        speed = [x_speed, y_speed]
-        return speed
+        x_speed = self.settings.speed * randint(10, 90) / 100
+        y_speed = choice([-1, 1]) * math.sqrt(self.settings.speed ** 2 - x_speed ** 2)
+        self.start_direction = [x_speed, y_speed]
 
     def calculate_speed(self):
+        # exception for beach ball
+        if self.start_direction == [0, 0]:
+            self.random_direction()
         dir_len = math.sqrt(self.start_direction[0] ** 2 + self.start_direction[1] ** 2)
-        x_speed = self.start_direction[0] / math.sqrt(dir_len) * self.settings.speed
-        y_speed = self.start_direction[1] / math.sqrt(dir_len) * self.settings.speed
+        x_speed = self.start_direction[0] / dir_len * self.settings.speed
+        y_speed = self.start_direction[1] / dir_len * self.settings.speed
         if self.special == "Teleporter":
             speed = [
                 x_speed * self.settings.slow_teleporters,
                 y_speed * self.settings.slow_teleporters,
+            ]
+        elif self.special == "Beach":
+            speed = [
+                x_speed * self.settings.slow_beach,
+                y_speed * self.settings.slow_beach,
             ]
         else:
             speed = [x_speed, y_speed]
@@ -153,70 +156,212 @@ class Ball(pygame.sprite.Sprite):
             else:
                 self.rest_speed[i] = -(abs(tmp_speed[i]) % 1.0)
         self.rect.move_ip(tmp_speed)
+        # self.last_collision += 1
 
     def out_of_bounds(self):
-        """remove the ball if it leaves the screen and still moving down"""
-        if self.rect.centery > self.settings.screen_height and self.speed[1] > 0:
+        """remove the ball if it leaves the screen"""
+        if self.rect.centery > self.settings.screen_height:
             self.kill()
-            self._total_balls += 1
+            sounds.play_sound("dropped_ball", self.settings.sound)
+            Ball._total_balls += 1
+
+    def side_reflection_teleporter(self):
+        if self.rect.centerx < 0:
+            self.rect.centerx = self.rect.centerx + self.settings.screen_width
+            sounds.play_sound("hit_teleport", self.settings.sound)
+        elif self.rect.centerx > self.settings.screen_width:
+            self.rect.centerx = self.rect.centerx % self.settings.screen_width
+            sounds.play_sound("hit_teleport", self.settings.sound)
+        elif self.rect.top < 0:
+            self.rect.bottom = self.settings.screen_height
+            sounds.play_sound("hit_teleport", self.settings.sound)
+        elif self.rect.bottom > self.settings.screen_height and self.settings.debug:
+            self.speed[1] = -abs(self.speed[1])
+            sounds.play_sound("hit_teleport", self.settings.sound)
+        # self.last_collision = 0
+
+    def side_reflection_beach(self):
+        if self.rect.left < 0:
+            if self.speed[0] > 0:
+                pass
+            elif self.speed[1] > 0:
+                self.speed[0], self.speed[1] = (
+                    abs(self.speed[1]),
+                    abs(self.speed[0]),
+                )
+                self.rest_speed[0], self.rest_speed[1] = (
+                    abs(self.rest_speed[1]),
+                    abs(self.rest_speed[0]),
+                )
+            else:
+                self.speed[0], self.speed[1] = (
+                    abs(self.speed[1]),
+                    -abs(self.speed[0]),
+                )
+                self.rest_speed[0], self.rest_speed[1] = (
+                    abs(self.rest_speed[1]),
+                    -abs(self.rest_speed[0]),
+                )
+        elif self.rect.right > self.settings.screen_width:
+            if self.speed[0] < 0:
+                pass
+            elif self.speed[1] > 0:
+                self.speed[0], self.speed[1] = (
+                    -abs(self.speed[1]),
+                    abs(self.speed[0]),
+                )
+                self.rest_speed[0], self.rest_speed[1] = (
+                    -abs(self.rest_speed[1]),
+                    abs(self.rest_speed[0]),
+                )
+            else:
+                self.speed[0], self.speed[1] = (
+                    -abs(self.speed[1]),
+                    -abs(self.speed[0]),
+                )
+                self.rest_speed[0], self.rest_speed[1] = (
+                    -abs(self.rest_speed[1]),
+                    -abs(self.rest_speed[0]),
+                )
+        elif self.rect.top < 0:
+            if self.speed[1] > 0:
+                pass
+            elif self.speed[0] > 0:
+                self.speed[0], self.speed[1] = (
+                    abs(self.speed[1]),
+                    abs(self.speed[0]),
+                )
+                self.rest_speed[0], self.rest_speed[1] = (
+                    abs(self.rest_speed[1]),
+                    abs(self.rest_speed[0]),
+                )
+            else:
+                self.speed[0], self.speed[1] = (
+                    -abs(self.speed[1]),
+                    abs(self.speed[0]),
+                )
+                self.rest_speed[0], self.rest_speed[1] = (
+                    -abs(self.rest_speed[1]),
+                    abs(self.rest_speed[0]),
+                )
+        elif self.rect.bottom > self.settings.screen_height and self.settings.debug:
+            if self.speed[1] < 0:
+                pass
+            elif self.speed[0] > 0:
+                self.speed[0], self.speed[1] = (
+                    abs(self.speed[1]),
+                    -abs(self.speed[0]),
+                )
+                self.rest_speed[0], self.rest_speed[1] = (
+                    abs(self.rest_speed[1]),
+                    -abs(self.rest_speed[0]),
+                )
+            else:
+                self.rest_speed[0], self.rest_speed[1] = (
+                    -abs(self.rest_speed[1]),
+                    -abs(self.rest_speed[0]),
+                )
+        # self.last_collision = 0
+
+    def side_reflection_normal(self):
+        if self.rect.left < 0:
+            self.speed[0] = abs(self.speed[0])
+            self.rest_speed[0] = -self.rest_speed[0]
+            sounds.play_sound("wall_hit", self.settings.sound)
+        elif self.rect.right > self.settings.screen_width:
+            self.speed[0] = -abs(self.speed[0])
+            self.rest_speed[0] = -abs(self.rest_speed[0])
+            sounds.play_sound("wall_hit", self.settings.sound)
+        elif self.rect.top < 0:
+            self.speed[1] = abs(self.speed[1])
+            self.rest_speed[1] = abs(self.rest_speed[1])
+            sounds.play_sound("wall_hit", self.settings.sound)
+        elif self.rect.bottom > self.settings.screen_height and self.settings.debug:
+            self.speed[1] = -abs(self.speed[1])
+            sounds.play_sound("wall_hit", self.settings.sound)
+
+        # self.last_collision = 0
 
     def side_collisions(self):
         """handles the direction changes when hitting sides
             Normal should work like a standard reflection
             Teleporter goes through the walls
         """
+        # if # self.last_collision < self.settings.low_collision_limit:
+        #    pass
         if self.special == "Teleporter":
-            if self.rect.centerx < 0:
-                self.rect.centerx = self.rect.centerx + self.settings.screen_width
-            elif self.rect.centerx > self.settings.screen_width:
-                self.rect.centerx = self.rect.centerx % self.settings.screen_width
-            elif self.rect.top < 0:
-                self.rect.bottom = self.settings.screen_height
-            elif self.rect.bottom > self.settings.screen_height and self.settings.debug:
-                self.speed[1] = -abs(self.speed[1])
+            self.side_reflection_teleporter()
+        elif self.special == "Beach":
+            self.side_reflection_beach()
         else:  # if the rest is not also treated it can lead to sliding along walls
-            if self.rect.left < 0:
-                self.speed[0] = abs(self.speed[0])
-                self.rest_speed[0] = -self.rest_speed[0]
-            elif self.rect.right > self.settings.screen_width:
-                self.speed[0] = -abs(self.speed[0])
-                self.rest_speed[0] = -abs(self.rest_speed[0])
-            elif self.rect.top < 0:
-                self.speed[1] = abs(self.speed[1])
-                self.rest_speed[1] = abs(self.rest_speed[1])
-            elif self.rect.bottom > self.settings.screen_height and self.settings.debug:
-                self.speed[1] = -abs(self.speed[1])
-                self.rest_speed[1] = -abs(self.rest_speed[1])
+            self.side_reflection_normal()
 
-    def slider_collision(self, slider):
+    def slider_collision(self, slider, pressed_keys):
         """Only reflect from slider when moving down
-            also speeds up the ball on each reflection"""
-        if pygame.sprite.spritecollideany(self, slider):
+            also speeds up the ball on each reflection
+            and by friction adds removes speed and changes direction slightly"""
+        if (
+            pygame.sprite.spritecollideany(self, slider)
+            # and # self.last_collision < self.settings.low_collision_limit
+        ):
             if self.speed[1] > 0:
-                self.speed[0] = self.speed[0] * (1 + self.settings.speed_increase)
-                self.speed[1] = -self.speed[1] * (1 + self.settings.speed_increase)
-                self.rest_speed[1] = -self.rest_speed[1]
-                self._slider_reflections += 1
+                if self.special == "Beach":
+                    if self.speed[0] > 0:
+                        self.speed[0], self.speed[1] = (
+                            abs(self.speed[1]),
+                            -abs(self.speed[0]),
+                        )
+                        sounds.play_sound("bounce", self.settings.sound)
+                    else:
+                        self.speed[0], self.speed[1] = (
+                            -abs(self.speed[1]),
+                            -abs(self.speed[0]),
+                        )
+                        sounds.play_sound("bounce", self.settings.sound)
+                else:
+                    self.speed[0] = self.speed[0] * (1 + self.settings.speed_increase)
+                    self.speed[1] = -self.speed[1] * (1 + self.settings.speed_increase)
+                    self.rest_speed[1] = -self.rest_speed[1]
+                    Ball._slider_reflections += 1
+                    sounds.play_sound("bounce", self.settings.sound)
+                    if self.settings.friction:
+                        total_speed = math.sqrt(self.speed[0] ** 2 + self.speed[1] ** 2)
+                        if pressed_keys[K_LEFT]:
+                            self.speed[0] += self.settings.friction * total_speed
+                        if pressed_keys[K_RIGHT]:
+                            self.speed[0] += -self.settings.friction * total_speed
+                # self.last_collision = 0
 
     def brick_collision(self, balls, bricks, all_sprites):
-        if pygame.sprite.spritecollideany(self, bricks):
+        if (
+            pygame.sprite.spritecollideany(self, bricks)
+            # and # self.last_collision < self.settings.low_collision_limit
+        ):
             collided_brick = pygame.sprite.spritecollideany(self, bricks)
 
             # then remove the brick
             if collided_brick.special == "Teleporter":
-                tmp_speed_x, tmp_speed_y = self.speed
-                new_ball = Ball("Teleporter", [tmp_speed_x, tmp_speed_y])
+                direction = self.speed[:]
+                new_ball = Ball("Teleporter", direction)
                 new_ball.rect.left, new_ball.rect.top = self.rect.left, self.rect.top
                 balls.add(new_ball)
                 all_sprites.add(new_ball)
+                sounds.play_sound("brick_teleporter", self.settings.sound)
             elif collided_brick.special == "Duplicator":
-                tmp_speed_x, tmp_speed_y = self.speed
-                new_ball = Ball("Normal", [tmp_speed_x, tmp_speed_y])
+                direction = self.speed[:]
+                new_ball = Ball("Normal", direction)
                 new_ball.rect.left, new_ball.rect.top = self.rect.left, self.rect.top
                 balls.add(new_ball)
                 all_sprites.add(new_ball)
+                sounds.play_sound("brick_duplicator", self.settings.sound)
+            elif collided_brick.special == "Beach":
+                new_ball = Ball("Beach", [0, 0])
+                new_ball.rect.left, new_ball.rect.top = self.rect.left, self.rect.top
+                balls.add(new_ball)
+                all_sprites.add(new_ball)
+                sounds.play_sound("brick_beach", self.settings.sound)
             else:  # meant for collided_brick.special == "Normal":
-                pass
+                sounds.play_sound("brick_normal", self.settings.sound)
             dx = self.rect.centerx - collided_brick.rect.centerx
             # if the ball doesn't hit within the central part of the length it reflects on the side
             # give speed tolerance otherwise it would lead to worse side reflection
@@ -230,16 +375,17 @@ class Ball(pygame.sprite.Sprite):
                 self.speed[1] = -self.speed[1]
                 self.rest_speed[1] = -self.rest_speed[1]
             collided_brick.kill()
-            self._destroyed_bricks += 1
+            Ball._destroyed_bricks += 1
+            # self.last_collision = 0
 
-    def update(self, balls, slider, bricks, all_sprites):
+    def update(self, balls, slider, bricks, all_sprites, pressed_keys):
         self.float_move_ip()
         # self.rect.move_ip(self.speed)
         # screen side collisions
         self.side_collisions()
 
         # simple slider collision
-        self.slider_collision(slider)
+        self.slider_collision(slider, pressed_keys)
 
         # brick collision
         self.brick_collision(balls, bricks, all_sprites)
@@ -252,16 +398,43 @@ class Brick(pygame.sprite.Sprite):
     def __init__(self, all_sprites):
         super(Brick, self).__init__()
         self.settings = Settings()
-        rand_type_decision = randint(0, 100)
-        if rand_type_decision < self.settings.percent_duplicators:
+
+        # Set the attribute self.special
+        self.special = "Normal"
+        self.decide_type()
+
+        # Set the image dependent of type
+        self.set_image()
+
+        # Add the collision rect
+        self.rect = self.image.get_rect()
+
+        # Set random open(!) position
+        self.set_rand_position(all_sprites)
+
+    def decide_type(self):
+        """subroutine of __init__ setting the brick type by chance"""
+
+        rand_type_decision = randint(1, 1000)
+        if rand_type_decision <= self.settings.promille_duplicators:
             self.special = "Duplicator"
-        elif rand_type_decision < (
-            self.settings.percent_duplicators + self.settings.percent_teleporters
+        elif rand_type_decision <= (
+            self.settings.promille_duplicators + self.settings.promille_teleporters
         ):
             self.special = "Teleporter"
+        elif rand_type_decision <= (
+            self.settings.promille_duplicators
+            + self.settings.promille_teleporters
+            + self.settings.promille_beach
+        ):
+            self.special = "Beach"
         else:
-            self.special = "Normal"
+            pass
 
+    def set_image(self):
+        """subroutine of __init__:
+           depending on the brick type sets the right image
+           """
         if self.special == "Normal":
             brick_image = choice(
                 [
@@ -269,23 +442,32 @@ class Brick(pygame.sprite.Sprite):
                     "brick2.png",
                     "brick3.png",
                     "brick4.png",
-                    # "brick_blue.png",
                     # "brick_bright.png",
                     # "brick_gray.png",
                     # "brick_green.png",
-                    # "brick_red.png",
                 ]
             )  # TODO: Change to the load function when final size is clear
         elif self.special == "Duplicator":
             brick_image = "brick_blue.png"
         elif self.special == "Teleporter":
             brick_image = "brick_red.png"
+        elif self.special == "Beach":
+            brick_image = "brick_yellow.png"
+        else:  # Should not happen
+            brick_image = "brick_gray.png"
 
         self.path_bricks: str = f"../images/{brick_image}"
         self.image = pygame.image.load(self.path_bricks)  # .convert()
         self.image = pygame.transform.scale(self.image, (100, 50)).convert()
-        self.rect = self.image.get_rect()
 
+    def set_rand_position(self, all_sprites):
+        """
+        Tries different positions for the new brick that are not blocked by other
+        objects (alL_sprites);
+        Additional runaway loop prevention added for possible future functions,
+        that could fill the screen more
+        :return:
+        """
         # Add the brick at a random position if that doesn't with any other sprite
         collision = True
         # only try 10 times to stop runaway loop

@@ -2,17 +2,18 @@
 #
 # The non-ultimate brick shooter
 # A first pygame project to practice object oriented programming
-# PUT URL HERE?
+# https://github.com/TorErichs/brickshooter
 #
 # Released under the GNU General Public License
 
-VERSION = "0.2"
+VERSION = "0.5"
 
 try:
     from settings import Settings
     import sys
     import pygame
     from brickshooter import Slider, Ball, Brick
+    import sounds
 
     # copied from www.realpython.com/pygame-a-primer
     # Import pygame.locals for easier access to key coordinates
@@ -39,6 +40,7 @@ class BrickShooter:
     def __init__(self):
         """Initialize the game"""
         pygame.init()
+        pygame.mixer.init()
         self.running = True
         self.last_loop = False
         self.pause = False
@@ -52,7 +54,7 @@ class BrickShooter:
         pygame.display.set_caption("The non-ultimate brick shooter (TNUBS)")
 
         # set background
-        self.bg_color = (52, 183, 235)  # TODO nice color scheme
+        self.bg_color = (52, 183, 235)
 
         # initiate objects
         self.slider = Slider()
@@ -73,6 +75,15 @@ class BrickShooter:
             new_brick = Brick(self.all_sprites)
             self.bricks.add(new_brick)
             self.all_sprites.add(new_brick)
+
+    def calculate_highscore(self):
+        points = int(
+            self.settings.points_per_brick * Ball._destroyed_bricks
+            + self.settings.points_per_lost_ball * Ball._total_balls
+            + self.settings.points_per_reflection * Ball._slider_reflections
+            + pygame.time.get_ticks() // self.settings.point_every_x_ms
+        )
+        return points
 
     def run_game(self):
         """Start the main loop of the game"""
@@ -108,7 +119,13 @@ class BrickShooter:
             ):  # TODO: Define different loss behavior than just close window
 
                 for ball in self.balls:
-                    ball.update(self.balls, self.sliders, self.bricks, self.all_sprites)
+                    ball.update(
+                        self.balls,
+                        self.sliders,
+                        self.bricks,
+                        self.all_sprites,
+                        pressed_keys,
+                    )
                 if not len(self.balls):
                     self.running = False
                 if len(self.bricks) < self.settings.min_bricks:
@@ -130,15 +147,15 @@ class BrickShooter:
 
             # prints the current game situation
             pygame.display.flip()
-
+            self.highscore = self.calculate_highscore()
             # delays the game to have a constant frame rate
             self.clock.tick(self.settings.max_fps)
 
         # TODO exit text oder so, pause end or delay for a while and print text
+        sounds.play_sound("lost", self.settings.sound)
         print(self.clock.get_fps())
-        print(
-            Ball()._destroyed_bricks, Ball()._slider_reflections
-        )  # TODO: getter function
+        print(self.highscore)
+        print(Ball._destroyed_bricks, Ball._slider_reflections)  # TODO: getter function
         # TODO choose a real value and only trigger pause upon loss can be confusing otherwise
 
         pygame.time.wait(1500)

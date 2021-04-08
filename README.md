@@ -1,28 +1,59 @@
-# The not-ultimate brick shooter ***(TNUPS)***
-
-### Disclosure
-***images taken from wiki commons***
+# The non-ultimate brick shooter ***(TNUPS)***
 
 ## General description
+
+This game was started to practice my skills in object-oriented programming.
+It still is not fully finished, but a game probably never really is.
+It should be fully functioning, though. And, if you run, I hope you get some joy out of it.
+
+*Please note that I used some public domain content. See the credits and disclosure.*
 
 ### Basic Game Design
 
 To summarize the main objectives of the game:
 
 The goal of the game is to keep the ball in bounds:
-+ The ball starts at the center with a random direction.
++ The ball starts at the initial position of the slider at a random 45° degree angle.
 + The player has to protect the bottom of the screen with a slider,
-which can be moved left and right.
+which can only be moved left and right.
 + The ball is reflected by all sides, but the bottom, and the slider.
 + The player cannot move off the screen.
-+ The game ends when the ball hits the bottom of the screen 
++ The game ends when the last ball is of the screen 
 
 Let's get started!
+
+#### Gameplay
+
+The game starts automatically after a short time to give the user an overview
++ ***'Left'*** and ***'right'*** cursor move the slider
++ ***'p'*** can be used to pause the game and restart it
++ ***'Esc'*** ends the game normally
++ ***Close window*** can be used to shut the game done immediately
+
+### Special functions
+
+* Additional to the normal functions some special balls can be triggered by hitting bricks that create them:
+   + An additional ball can be triggered by a blue brick (soccer ball)
+      - the new ball continues in the previous direction of the hitting ball
+      - the speed is reduced to the starting speed of normal balls
+   + By hitting a red brick a *teleporter* is created (basketball)
+      - *teleporters* start with much lower speed and tunnel through the walls
+      - they get deleted only if they move downwards through the bottom
+      - they react with bricks in the normal way
+   * A *beach ball* can be triggered by hitting a yellow brick (beach ball)
+      - *beach balls* are reflected at 90° at walls and on the slider
+      - they also start with slower speeds 
+      - they reflect normally from bricks
+* Each time a normal ball hits the slider:
+   + speed is added to the ball
+   + it can react to slider movement
+      - friction allows to slow the ball down or speed it up horizontally
+      - this changes the angle of the ball
+      - allows some active control by the user
 
 ## TODOs
 
 + brick counter / time counter / total ball counter to print exit message
-+ friction with the slider  
 + use the `.font` to write some simple instructions on the background
     * ```python # Display some text
         font = pygame.font.Font(None, 36)
@@ -33,22 +64,30 @@ Let's get started!
     * use this to first explain game and then start at key like `K_SPACE`
 + add the loading errors and so on also to packages
 + refactor complex functions
++ highscore (exclude pause time)
++ screenshots for documentation
++ concept for presentation
++ determine useful starting values
 
 ### Ideas
 
-+ `surfarray` to make bricks explode?
++ Background music?
+   + decided against it for the moment
 + special bricks
     + moving brick
+    + special bricks that disappear after a while?  
     + double hit brick?
-+ nice colors
-+ 90° Ball?
-+ add music
-+ highscore (exclude pause time)
-+ use certain keys to trigger modes (developer flag?)
++ nicer colors
++ replace the slider with nicer skin
 + `def reinit` for a new round
 + lookup dirty rect and partial refresh
 + Multiple sliders?
 + Use real pause key
++ special bricks only after a certain time
+
+### Known glitches
++ reflections of ball on the long side of the brick can behave like reflections on the inner side of the shorts sides of the brick. This is only observed when the collisions happen very close to the edge. 
++ at high speeds balls can get lost at the bottom despite debug flag that should reflect
 
 ## Personal progress documentation
 
@@ -71,9 +110,9 @@ Let's get started!
 1. Moved some classes into different files
 1. Imported first brick
 
-***End of day 0***
+***End of day zero***
 
-### Real day 1
+### Day 1
 
 1. Applied `.convert()` and `.convert_alpha()` to the objects ball and brick
 1. `pygame.transform.scale()` to get the brick into a good size   
@@ -99,9 +138,10 @@ Let's get started!
         * eventlist
 1. first very quick test with clock and fps printing
 
-***End of real day 1***
+***End of day one***
+
     
-### Real Day 2
+### Day 2
 
 1. Improved the brick collision again (2px tolerance and including ball radius)
 1. debug flag for more focus on game mechanics:
@@ -143,3 +183,49 @@ Let's get started!
 1. rewrote the `calculate_speed` function so that I could hand over the speed of original ball
     * allows to create new ball with same direction
     * but starting speed as in settings specified
+   
+***End of day two***
+    
+### Day 3
+
+1. Repaired a glitch in `Ball.calculate_speed()`
+1. Refactoring of Brick
+   * also needed to fix the chance calculation
+1. Implemented first version of beach ball (`Ball.special = "Beach"`)
+1. Introduced a friction interaction with the slider to give the player more control
+   + Strength (if at all) can be set in `Settings.friction`
+   + if the slider moves in different horizontal direction as ball it gives something like a spin causing the ball to bounce of flatter
+   + gives the chance to give very vertical balls some more angle by moving the slider in contact
+1. "Beach" ball only reflects at right angle at wall and slide
+   + would otherwise be just too much
+1. tried to suppress double reflections by a `Ball.last_collision`
+   + doesn't work well
+   + better implementation is just checking the speed and meant-to-be speed
+1. tried to make the "teleporter" only move straight when hitting bricks
+   * works easily by addition if in brick collision
+   * boring, because if it hits a special ball one gets a line of balls
+   * also if it starts with upward speed the game will never end =)
+1. Established sound effects
+   * downloaded sounds from www.opengameart.org
+   * some manual tests
+   * created a function to play the sounds (`play_sound`)
+      - sounds can be assigned via a dictionary to make double usage and changes easier
+      - included a flag `Settings.sound` that allows turning off the sound
+      
+***End day three***
+
+## Credits & disclosure
+
+### Sound files
+downloaded from www.opengameart.org
+
++ "short alarm" by "yd"  
++ "Glass bell sounds" by "Varkalander"  
++ "5 break, crunch impacts" by "Independent.nu"  
++ "Interface Sounds Starter Pack" by "p0ss"  
++ "Collision Nutfall (Yo Frankie!)" by "Blender Foundation"  
++ "Cute cartoon jump sound effect" by cfork and qubodup (Boing Raw Copyright 2005 cfork <http://freesound.org/people/cfork/> Boing Jump Copyright 2012 Iwan Gabovitch <http://qubodup.net>)  
++ "Laser shot" by "Mobeyee Sounds"  
+
+### Images
+downloaded for wikimedia commons
