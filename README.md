@@ -6,7 +6,7 @@ This game was started to practice my skills in object-oriented programming.
 It still is not fully finished, but a game probably never really is.
 It should be fully functioning, though. And, if you run, I hope you get some joy out of it.
 
-*Please note that I used some public domain content. See the credits and disclosure.*
+*Please note that I used some open content. See the credits and disclosure.*
 
 ### Basic Game Design
 
@@ -51,6 +51,8 @@ The game starts automatically after a short time to give the user an overview
       - this changes the angle of the ball
       - allows some active control by the user
 
+---
+
 ## TODOs
 
 + brick counter / time counter / total ball counter to print exit message
@@ -68,10 +70,11 @@ The game starts automatically after a short time to give the user an overview
 + screenshots for documentation
 + concept for presentation
 + determine useful starting values
++ add try/except at critical points
 
 ### Ideas
 
-+ Background music?
++ Background music
    + decided against it for the moment
 + special bricks
     + moving brick
@@ -82,19 +85,45 @@ The game starts automatically after a short time to give the user an overview
 + `def reinit` for a new round
 + lookup dirty rect and partial refresh
 + Multiple sliders?
-+ Use real pause key
 + special bricks only after a certain time
 
 ### Known glitches
 + reflections of ball on the long side of the brick can behave like reflections on the inner side of the shorts sides of the brick. This is only observed when the collisions happen very close to the edge. 
 + at high speeds balls can get lost at the bottom despite debug flag that should reflect
 
+---
+
+## Credits & disclosure
+
+### Images
+downloaded for [wikimedia commons](commons.wikimedia.org)
+
+* [Brickwall](https://commons.wikimedia.org/wiki/File:Brick_wall_close-up_view.jpg)
+* [BeachBall](https://commons.wikimedia.org/wiki/File:Blender259BeachBall.png)
+* [Basketball](https://commons.wikimedia.org/wiki/File:Basketball_Clipart.svg)
+* [Soccerball](https://commons.wikimedia.org/wiki/File:Soccerball.svg)
+
+
+### Sound files
+downloaded from [opengameart.org](www.opengameart.org)
+
++ "short alarm" by "yd"  
++ "Glass bell sounds" by "Varkalander"  
++ "5 break, crunch impacts" by "Independent.nu"  
++ "Interface Sounds Starter Pack" by "p0ss"  
++ "Collision Nutfall (Yo Frankie!)" by "Blender Foundation"  
++ "Cute cartoon jump sound effect" by cfork and qubodup (Boing Raw Copyright 2005 cfork <http://freesound.org/people/cfork/> Boing Jump Copyright 2012 Iwan Gabovitch <http://qubodup.net>)  
++ "Laser shot" by "Mobeyee Sounds"  
+
+
+---
+
 ## Personal progress documentation
 
 ### Day 0 (half a day)
 
 1. Imported the starting structure from "Eric Matthes: Python 3 Crashkurs".
-1. Imported the key handling from https://realpython.com/pygame-a-primer/
+1. Imported the image handling from https://realpython.com/pygame-a-primer/
 1. Create the "ball" as a black square and blit on surface
    1. Creating random starting position for the ball in the upper center
 1. Create the slider in `brickshooter.py` 
@@ -196,7 +225,7 @@ The game starts automatically after a short time to give the user an overview
    + Strength (if at all) can be set in `Settings.friction`
    + if the slider moves in different horizontal direction as ball it gives something like a spin causing the ball to bounce of flatter
    + gives the chance to give very vertical balls some more angle by moving the slider in contact
-1. "Beach" ball only reflects at right angle at wall and slide
+1. "Beach" ball only reflects at right angle at a wall and slide
    + would otherwise be just too much
 1. tried to suppress double reflections by a `Ball.last_collision`
    + doesn't work well
@@ -214,18 +243,7 @@ The game starts automatically after a short time to give the user an overview
       
 ***End day three***
 
-## Credits & disclosure
+### Additional work
 
-### Sound files
-downloaded from www.opengameart.org
+1. 
 
-+ "short alarm" by "yd"  
-+ "Glass bell sounds" by "Varkalander"  
-+ "5 break, crunch impacts" by "Independent.nu"  
-+ "Interface Sounds Starter Pack" by "p0ss"  
-+ "Collision Nutfall (Yo Frankie!)" by "Blender Foundation"  
-+ "Cute cartoon jump sound effect" by cfork and qubodup (Boing Raw Copyright 2005 cfork <http://freesound.org/people/cfork/> Boing Jump Copyright 2012 Iwan Gabovitch <http://qubodup.net>)  
-+ "Laser shot" by "Mobeyee Sounds"  
-
-### Images
-downloaded for wikimedia commons

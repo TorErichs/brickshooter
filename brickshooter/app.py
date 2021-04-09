@@ -1,4 +1,4 @@
-#!/usr/bin/env python  TODO: change completely
+#!/usr/bin/env python
 #
 # The non-ultimate brick shooter
 # A first pygame project to practice object oriented programming
@@ -104,7 +104,7 @@ class BrickShooter:
                 self.pause
             ):  # Combined with above gives the change to pause the game for a moment (or demonstration)
                 pygame.time.wait(100)
-                continue  # TODO: find more elegant solution (add delay or sleep)
+                continue
 
             # Creates a dict with key and bool (is pressed?) for the keyboard
             pressed_keys = pygame.key.get_pressed()
@@ -157,6 +157,7 @@ class BrickShooter:
         print(self.highscore)
         print(Ball._destroyed_bricks, Ball._slider_reflections)  # TODO: getter function
         # TODO choose a real value and only trigger pause upon loss can be confusing otherwise
+        # Probably combine with len(all_balls) or so
 
         pygame.time.wait(1500)
         print(pygame.time.get_ticks())

@@ -8,8 +8,6 @@ import math
 import sounds
 
 # copied from www.realpython.com/pygame-a-primer
-# Import pygame.locals for easier access to key coordinates
-# Updated to conform to flake8 and black standards
 from pygame.locals import (
     K_LEFT,
     K_RIGHT,
@@ -65,7 +63,7 @@ class Ball(pygame.sprite.Sprite):
         self.special = special
         # self.last_collision = 0
 
-        # set the image and size  # TODO: Different image for first ball?
+        # set the image and size
         if self.special == "Teleporter":
             self.image, self.rect = load_png("bball.png")
         elif self.special == "Beach":
@@ -446,7 +444,7 @@ class Brick(pygame.sprite.Sprite):
                     # "brick_gray.png",
                     # "brick_green.png",
                 ]
-            )  # TODO: Change to the load function when final size is clear
+            )
         elif self.special == "Duplicator":
             brick_image = "brick_blue.png"
         elif self.special == "Teleporter":
@@ -457,7 +455,7 @@ class Brick(pygame.sprite.Sprite):
             brick_image = "brick_gray.png"
 
         self.path_bricks: str = f"../images/{brick_image}"
-        self.image = pygame.image.load(self.path_bricks)  # .convert()
+        self.image = pygame.image.load(self.path_bricks)
         self.image = pygame.transform.scale(self.image, (100, 50)).convert()
 
     def set_rand_position(self, all_sprites):
@@ -466,7 +464,6 @@ class Brick(pygame.sprite.Sprite):
         objects (alL_sprites);
         Additional runaway loop prevention added for possible future functions,
         that could fill the screen more
-        :return:
         """
         # Add the brick at a random position if that doesn't with any other sprite
         collision = True
