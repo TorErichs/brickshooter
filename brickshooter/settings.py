@@ -32,10 +32,10 @@ class Settings:
         self.friction = 0.1
 
         """Highscore settings"""
-        self.points_per_brick = 2
-        self.points_per_reflection = 1
+        self.points_per_brick = 1
+        self.points_per_reflection = 2
         self.points_per_lost_ball = -25
-        self.point_every_x_ms = 10000
+        self.point_every_x_ms = 100000
 
         """Developer options"""
         # Enables developer features for testing (auto bottom reflection)
@@ -43,5 +43,8 @@ class Settings:
 
         # allows to change starting speed and slider speed accordingly
         self.speed = 300 / self.max_fps
+
+        # print fps
+        self.print_fps = True
 
         # self.low_collision_limit = 1

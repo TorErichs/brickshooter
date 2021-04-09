@@ -55,15 +55,6 @@ The game starts automatically after a short time to give the user an overview
 
 ## TODOs
 
-+ brick counter / time counter / total ball counter to print exit message
-+ use the `.font` to write some simple instructions on the background
-    * ```python # Display some text
-        font = pygame.font.Font(None, 36)
-        text = font.render("Hello There", 1, (10, 10, 10))
-        textpos = text.get_rect()
-        textpos.centerx = background.get_rect().centerx
-        background.blit(text, textpos)```
-    * use this to first explain game and then start at key like `K_SPACE`
 + add the loading errors and so on also to packages
 + refactor complex functions
 + highscore (exclude pause time)
@@ -245,5 +236,5 @@ downloaded from [opengameart.org](www.opengameart.org)
 
 ### Additional work
 
-1. 
+1. Added text to some of the game situations
 
